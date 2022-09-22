@@ -1,8 +1,10 @@
 from sqlalchemy import select
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+import psycopg2
 import db_connections
 import Tables as db
+
 
 
 def flatten(l):
