@@ -173,9 +173,9 @@ def classify_results(taxon_int_mapping, relation):
 
     if relation == "pollinates":
         # TODO: THis should be a database call
-        model_path = os.path.join(pwd, os.path.relpath("classifiers/pollination_classifier"))
+        model_path = os.path.join(pwd, os.path.relpath("flask_app/classifiers/pollination_classifier"))
         print("path to model: ", model_path)
-        scaler_path = os.path.join(pwd, os.path.relpath("classifiers/pollination_scaler"))
+        scaler_path = os.path.join(pwd, os.path.relpath("flask_app/classifiers/pollination_scaler"))
 
     else:
         warnings.warn("Selected relation not currently supported for ML classification")
