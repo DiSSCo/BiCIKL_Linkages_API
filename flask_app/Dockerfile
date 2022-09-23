@@ -7,14 +7,14 @@ RUN apt-get update && apt-get install -y libpq-dev && apt-get install python3-de
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
-COPY ./api app/api
-COPY ./bin app/bin
-COPY ./classifiers app/classifiers
-COPY wsgi.py app/wsgi.py
+COPY ./api app/flask_app/api
+COPY ./bin app/flask_app/bin
+COPY ./classifiers app/flask_app/classifiers
+COPY wsgi.py app/flask_app/wsgi.py
 
 WORKDIR /app
 
 EXPOSE 8080
-ENTRYPOINT ["bash", "/app/bin/bootstrap.sh"]
+ENTRYPOINT ["bash", "/app/flask_app/bin/bootstrap.sh"]
 
 #CMD ["gunicorn", "-w 4", "-b", "0.0.0.0:8000", "app:app"]
