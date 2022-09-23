@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  app:
+    build: flask_app
+    volumes: # This might be a problem
+      - app:/app  # left is api folder, right is wkdir defined in flask_app/Dockerfile
+    ports:
+      - "8080:8080"
+  proxy:
+    build: nginx
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - app
+volumes:
+  app:
