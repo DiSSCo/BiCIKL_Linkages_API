@@ -67,6 +67,7 @@ def get_relation(stmt):
 
 
 
+
 engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
 
 
