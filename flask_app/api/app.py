@@ -1,6 +1,6 @@
 from flask import Flask
-from flask_app.api import predictions
-from flask_app.api import repository
+from api import predictions
+from api import repository
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)

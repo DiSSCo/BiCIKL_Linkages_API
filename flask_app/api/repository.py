@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from flask_app.bin import db_connections
-from flask_app.api import Tables as db
+from bin import db_connections
+from api import Tables as db
 
 def flatten(l):
     # Flatten a list (usually the results of a sqlalchemy query)

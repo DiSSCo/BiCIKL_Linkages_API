@@ -6,8 +6,8 @@ import numpy as np
 from sqlalchemy import select, and_
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
-from flask_app.bin import db_connections
-from flask_app.api import Tables as db
+from bin import db_connections
+from api import Tables as db
 import joblib
 
 '''
@@ -169,13 +169,11 @@ def classify_results(taxon_int_mapping, relation):
         int_arr = int_arr.reshape(1, -1)
 
     pwd = os.getcwd()
-    class_path = os.path.join(pwd, os.path.relpath("processed_data/classes.csv", pwd))
 
     if relation == "pollinates":
         # TODO: THis should be a database call
-        model_path = os.path.join(pwd, os.path.relpath("flask_app/classifiers/pollination_classifier"))
-        print("path to model: ", model_path)
-        scaler_path = os.path.join(pwd, os.path.relpath("flask_app/classifiers/pollination_scaler"))
+        model_path = os.path.join(pwd, os.path.relpath("classifiers/pollination_classifier"))
+        scaler_path = os.path.join(pwd, os.path.relpath("classifiers/pollination_scaler"))
 
     else:
         warnings.warn("Selected relation not currently supported for ML classification")
