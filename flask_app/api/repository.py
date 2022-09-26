@@ -26,6 +26,7 @@ def get_predators(taxon_id):
 
 def get_prey(taxon_id):
     stmt = select(db.Consumer_rln.consumed_taxon_id).where(db.Consumer_rln.consumers_taxon_id == taxon_id)
+    print("Qury statement: ", stmt)
     return get_relation(stmt)
 
 
@@ -40,8 +41,11 @@ def get_host(taxon_id):
 
 
 def get_relation(stmt):
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
     session = Session(engine)
+
     result = session.execute(stmt).all()
+    print("Session executed")
     result_ids = [r[0] for r in result]
 
 #    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus, db.Species.species).\
@@ -61,11 +65,6 @@ def get_relation(stmt):
     return result_records
 
 
-
-
-
-
-engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
 
 
 

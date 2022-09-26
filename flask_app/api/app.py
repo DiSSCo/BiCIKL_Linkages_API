@@ -43,6 +43,7 @@ def pollinated_by(taxon_id):
 
 @app.route("/preysOn/<taxon_id>")
 def preys_on(taxon_id):
+    print("Relation: Preys on. Beginning query...")
     return repository.get_prey(taxon_id)
     # 1980783 -> consumes 2685524
     # Ectropis crepuscularia (engrailed moth) consumes Abies amabilis (pacific silver fir)
