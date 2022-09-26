@@ -14,7 +14,7 @@ COPY wsgi.py app/wsgi.py
 
 WORKDIR /app
 
-EXPOSE 8080
+EXPOSE 5000
 ENTRYPOINT ["bash", "/app/bin/bootstrap.sh"]
 
 #CMD ["gunicorn", "-w 4", "-b", "0.0.0.0:8000", "app:app"]

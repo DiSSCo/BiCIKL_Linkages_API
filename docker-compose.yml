@@ -1,18 +1,24 @@
 version: '3.8'
 
 services:
-  app:
-    build: ./flask_app
-    volumes: # This might be a problem
-      - app:/app  # left is api folder, right is wkdir defined in flask_app/Dockerfile
-    ports:
-      - "8080:8080"
-  proxy:
-    build: ./nginx
+  flask_app:
+    container_name: flask_api
     restart: always
+    build: ./flask_app
+    volumes: ['./flask_app:/flask_app']  # left is api folder, right is wkdir defined in flask_app/Dockerfile
+    networks:
+      - linkage
     ports:
-      - "80:80"
-    depends_on:
-      - app
-volumes:
-  app:
+      - "5000:5000"
+  nginx:
+    container_name: nginx
+    restart: always
+    build: ./nginx
+    networks:
+      - linkage
+    expose:
+      - "8080"
+    ports:
+      - "30:8080"
+networks:
+  linkage:
