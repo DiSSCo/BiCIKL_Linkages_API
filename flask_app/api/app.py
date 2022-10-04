@@ -31,15 +31,13 @@ def pollinator_of(taxon_id):
     relation = "pollinates"
     # Taxon of interest is NOT a subject
     is_subject = False
+    strict = False
 
     # Check input args
 
-    request_data = request.get_json()
-    try:
-        conf = request_data["conf"]
-    except KeyError:
-        conf = 0.6
-    strict = False
+    conf = request.args.get("conf")
+    if not conf:
+        conf = 0.5
 
     if not check_args(conf): return "invalid arguments, check confidence is float between 0 and 1", 400
 
@@ -63,11 +61,10 @@ def pollinated_by(taxon_id, conf=0.95):
     # Given a pollinator, return plants pollinated by the pollinator
     relation = "pollinates"
     is_subject = True
-    request_data = request.get_json()
-    try:
-        conf = request_data["conf"]
-    except KeyError:
-        conf = 0.6
+    conf = request.args.get("conf")
+    if not conf:
+        conf = 0.5
+
     strict = False
 
     if not check_args(conf): return "invalid arguments, check confidence is float between 0 and 1", 400
