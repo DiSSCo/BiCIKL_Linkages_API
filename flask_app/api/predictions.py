@@ -2,23 +2,24 @@ import math
 import os
 import warnings
 
+import joblib
 import numpy as np
 from sqlalchemy import select, and_
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+
 from bin import db_connections
 from api import Tables as db
-import joblib
+
+#from flask_app.bin import db_connections
+#from flask_app.api import Tables as db
 
 '''
 TODO
-    Use Corrected data from globi Niki uploaded
-    
     Train classifier on taxon ids instead of ordinal integers 
     - Get taxon ids for higher-level groups and upload it to db
     
     Do other relationships: eats, parasitizes
-
 
 '''
 
@@ -46,19 +47,21 @@ def flatten(l):
     return [item for sublist in l for item in sublist]
 
 
+def list_diff(a, b):
+    return list(set(a) - set(b))
+
 # Get Taxonomic Info
 
 def get_species_info(t_id):
     # Given a taxon id, return its taxonomy levels
-
     stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
-                  db.Species.species). \
+                  db.Species.species, db.Species.sci_name). \
         where(db.Species.taxon_id == t_id)
     result = session.execute(stmt).first()
     if not result:
         return []
 
-    return list(session.execute(stmt).first())
+    return list(result)
 
 
 def get_phyla(relation, phylum, is_subject_query):
@@ -87,7 +90,7 @@ def get_species_list_from_phyla(phyla):
     for phylum in phyla:
         # Given a phylum, get full taxonomy and ids of all species under that phylum
         stmt = select(db.Species.taxon_id, db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam,
-                      db.Species.genus, db.Species.species). \
+                      db.Species.genus, db.Species.species, db.Species.sci_name). \
             where(db.Species.phylum == phylum)
         species_list_full = species_list_full + session.execute(stmt).all()
 
@@ -97,6 +100,16 @@ def get_species_list_from_phyla(phyla):
     return species_list_taxonomy, species_list_tid
     # return species_subset, int_map_to_tid
 
+
+def get_taxonomy_from_species_list(taxon_ids):
+    stmt = select(db.Species.taxon_id, db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam,
+                      db.Species.genus, db.Species.species, db.Species.sci_name).filter(db.Species.taxon_id.in_(taxon_ids))
+    species_list_full = session.execute(stmt).all()
+
+    species_list_taxonomy = [sp[1:] for sp in species_list_full]
+    species_list_tid = [sp[0] for sp in species_list_full]
+
+    return species_list_taxonomy, species_list_tid
 
 # taxon_int mapping
 # When the classifier was trained, it used a mapping that transformed each taxonomic level into an integer
@@ -151,16 +164,19 @@ def map_taxonomy_int_row(row, taxon_map):
     return new_row
 
 
-def get_taxon_map(relation):
+def get_taxon_map(relation, strict):
     # Given a relationship (linkage), return the appropriate int mapping used to train the classifier
-    stmt = select(db.Relation_int_mapping.int_mapping).where(db.Relation_int_mapping.relation_type == relation)
+    if strict:
+        relation = relation + "_strict" # key for the "stricter" taxon_map stored in the database
+
+    stmt = select(db.Classifier.int_mapping).where(db.Classifier.relation_type == relation)
     result = session.execute(stmt).first()
     return result[0]
 
 
 # We've made a shortlist of potential species. Now, let's see how well they go with our species of interest
 
-def classify_results(taxon_int_mapping, relation):
+def classify_results(taxon_int_mapping, relation, thresh, strict):
     # transform mapping to np array
     int_arr = np.array(taxon_int_mapping)
 
@@ -171,15 +187,21 @@ def classify_results(taxon_int_mapping, relation):
     pwd = os.getcwd()
 
     if relation == "pollinates":
-        # TODO: THis should be a database call
-        model_path = os.path.join(pwd, os.path.relpath("classifiers/pollination_classifier"))
-        scaler_path = os.path.join(pwd, os.path.relpath("classifiers/pollination_scaler"))
+        if strict:
+            #model_path = os.path.join(pwd, "../classifiers/SMOTE_Model_Strict_model")
+            #scaler_path = os.path.join(pwd,  "../classifiers/SMOTE_Model_Strict_scaler")
+            model_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_Strict_model"))
+            scaler_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_Strict_scaler"))
+        else:
+            #model_path = os.path.join(pwd, "../classifiers/SMOTE_Model_model")
+            #scaler_path = os.path.join(pwd, "../classifiers/SMOTE_Model_scaler")
+
+            model_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_model"))
+            scaler_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_scaler"))
 
     else:
         warnings.warn("Selected relation not currently supported for ML classification")
         return
-
-
 
     # Unpickle classifier and scaler
     RFC = joblib.load(model_path)
@@ -192,7 +214,7 @@ def classify_results(taxon_int_mapping, relation):
     predictions = RFC.predict_proba(int_arr)
 
     # Select values where confidence is above a certain threshold
-    idx = list(np.where(predictions[:, 1] >= conf_thresh))[0]
+    idx = list(np.where(predictions[:, 1] >= thresh))[0]
 
     top_taxa = [taxon_int_mapping[i] for i in idx]
     confidence = [predictions[i, 1] for i in idx]
@@ -235,32 +257,58 @@ def resolve_taxa(top_taxa_ids, confidence):
     return result_records
 
 
+
+def append_missed_taxa(missed_taxa, taxa):
+    for tid in missed_taxa:
+        d = {
+            "taxon_id":tid,
+            "confidence":"Unknown"
+        }
+        taxa.append(d)
+    return taxa
+
+
+def append_not_int_mapped(missed_taxa , int_map_to_tid, taxon_ids):
+    int_mapped_tids = list(int_map_to_tid.values())
+    not_int_mapped = list_diff(taxon_ids, int_mapped_tids)
+
+    return list(set(missed_taxa + not_int_mapped)) # Remove duplicates
+
 # Main function of this class, calls the whole shebang
 
-def controller(relation, taxon_id, is_subject_query):
+def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_list=[]):
+
     null_response = []  # just in case
 
     # Select appropriate int mapping based on our relation
-    taxon_map = get_taxon_map(relation)
+    taxon_map = get_taxon_map(relation, strict)
+    #print(taxon_map)
 
-    # Query DB, get taxonomy of species
+    # Query DB, get taxonomy of taxon of interest
     species_info = get_species_info(taxon_id)
+
     if not species_info:
         warnings.warn("Species not found")
         return null_response
 
-    # Given species taxonomy, locate its int map
+    # Given species taxonomy, locate its particular int mapping
     species_info_int = map_taxonomy_int_row(species_info, taxon_map)
 
     if not species_info_int:  # If our species doesn't have an int_map, no point going any further
         return null_response
 
-    # Get species phylum, determine other phyla it can have the specified relation with
-    phylum = species_info[1]
-    appropriate_phyla = get_phyla(relation, phylum, is_subject_query)
+    # If no list is provided, we check all potential species at the phylum level
+    if not check_list:
+        # Get species phylum, determine other phyla it can have the specified relation with
+        phylum = species_info[1]
+        appropriate_phyla = get_phyla(relation, phylum, is_subject_query)
 
-    # Given phyla, get species
-    species_list, taxon_ids = get_species_list_from_phyla(appropriate_phyla)
+        # Given phyla, get species
+        species_list, taxon_ids = get_species_list_from_phyla(appropriate_phyla)
+        missed_taxa = []
+    else:
+        species_list, taxon_ids = get_taxonomy_from_species_list(check_list)
+        missed_taxa = list_diff(check_list, taxon_ids) # this is the list of taxa not in the database
 
     '''
     This is where we could impose other restrictions on species_list
@@ -269,32 +317,52 @@ def controller(relation, taxon_id, is_subject_query):
     '''
 
     # Given species list, get taxon_int mapping (and save this mapping)
-    appropriate_phyla_int, int_map_to_tid = map_species_to_int(species_list, taxon_ids, taxon_map)
+    species_to_check_int, int_map_to_tid = map_species_to_int(species_list, taxon_ids, taxon_map)
+    #missed_taxa = append_not_int_mapped(missed_taxa, int_map_to_tid, taxon_ids)
 
     # If no appropriate phyla have been int-mapped, return our null response
-    if not appropriate_phyla_int:
-        return null_response
+    if not species_to_check_int:
+        return append_missed_taxa(missed_taxa, [])
 
     if is_subject_query:
         # If our taxon is a SUBJECT, the species info int mapp will go to the LEFT of the potential matches
-        pass_to_class = [species_info_int + r for r in appropriate_phyla_int]
+        pass_to_class = [species_info_int + r for r in species_to_check_int]
 
     else:
         # If our taxon is a TARGET, the species info int mapp will go to the RIGHT of the potential matches
-        pass_to_class = [r + species_info_int for r in appropriate_phyla_int]
+        pass_to_class = [r + species_info_int for r in species_to_check_int]
+
 
     # This is where the magic happens - classify our results and get our confidence
-    top_taxa, confidence = classify_results(pass_to_class, relation)
+
+    top_taxa, confidence = classify_results(pass_to_class, relation, conf_thresh, strict)
+
     if not top_taxa:
         return null_response  # If classifier doesn't return any predictions
 
     top_taxa_ids = reverse_lookup(int_map_to_tid, top_taxa, is_subject_query)
+
     taxa = resolve_taxa(top_taxa_ids, confidence)
-    return taxa
+
+    # Default return value, if no list was provided at the start
+    if not missed_taxa:
+        return taxa
+    else:
+        return append_missed_taxa(missed_taxa, taxa)
+
+#0, 0, 5, 6, 71, 472, 256, 0, 0, 32, 99, 126, 765, 256
 
 
 engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
 session = Session(engine)
-conf_thresh = 0.8  # TODO: Maybe allow the user to set this up manually at some point
 
-#print(controller("pollinates", 1337480, is_subject_query=True))
+#get_taxonomy_from_species_list(tid)
+
+''''
+strict = False
+relation = "pollinates"
+#taxon_map = get_taxon_map(relation, strict)
+
+
+pass_to_class = [[0,0,3,92,439,464,1175,0,0,0,10,50,817,84]]
+classify_results(pass_to_class, relation,0, strict) '''
