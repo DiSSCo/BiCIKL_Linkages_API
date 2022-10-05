@@ -3,6 +3,8 @@ Here, we outline the functionality of the Biotic Linkages United Explorer (BLUE)
 
 ## Endpoints
 
+The API is accessible through the DNS ec2-18-134-210-210.eu-west-2.compute.amazonaws.com/. This section gives an overview of available endpoints.
+
 **/hello**
 
 Confirms connection to API
