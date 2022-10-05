@@ -187,17 +187,8 @@ def classify_results(taxon_int_mapping, relation, thresh, strict):
     pwd = os.getcwd()
 
     if relation == "pollinates":
-        if strict:
-            #model_path = os.path.join(pwd, "../classifiers/SMOTE_Model_Strict_model")
-            #scaler_path = os.path.join(pwd,  "../classifiers/SMOTE_Model_Strict_scaler")
-            model_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_Strict_model"))
-            scaler_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_Strict_scaler"))
-        else:
-            #model_path = os.path.join(pwd, "../classifiers/SMOTE_Model_model")
-            #scaler_path = os.path.join(pwd, "../classifiers/SMOTE_Model_scaler")
-
-            model_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_model"))
-            scaler_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_scaler"))
+        model_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_model"))
+        scaler_path = os.path.join(pwd, os.path.relpath("classifiers/SMOTE_Model_scaler"))
 
     else:
         warnings.warn("Selected relation not currently supported for ML classification")
