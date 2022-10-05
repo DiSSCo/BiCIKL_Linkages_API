@@ -1,51 +1,52 @@
-from sqlalchemy import select
+from sqlalchemy import select, and_
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import text
+
 from bin import db_connections
 from api import Tables as db
+
+#from flask_app.bin import db_connections
+#from flask_app.api import Tables as db
 
 def flatten(l):
     # Flatten a list (usually the results of a sqlalchemy query)
     return [item for sublist in l for item in sublist]
 
 
-def get_pollinators(taxon_id):
-    stmt = select(db.Pollinates_rln.pollinator_taxon_id).where(db.Pollinates_rln.pollinated_taxon_id==taxon_id)
-    return get_relation(stmt)
+
+def get_all_tids(is_subject): # Returns pollinators if true (subjects), plants if false (targets)
+    if is_subject:
+        stmt = select(db.Interactions.subject_taxon_id)\
+            .where(db.Interactions.relation_type == 'pollinates')
+    else:
+        stmt = (select(db.Interactions.target_taxon_id)
+                .where(db.Interactions.relation_type == 'pollinates'))
+    result = session.execute(stmt).all()
+    return flatten(result)
+
+def get_taxonomy(taxon_id):
+    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
+                      db.Species.species).where(db.Species.taxon_id == taxon_id)
+    result = session.execute(stmt).all()
+    return flatten(result)
 
 
-def get_pollinated(taxon_id):
-    stmt = select(db.Pollinates_rln.pollinated_taxon_id).where(db.Pollinates_rln.pollinator_taxon_id == taxon_id)
-    return get_relation(stmt)
+def get_interactions(taxon_id, relation, isSubject):
+    if isSubject:
+        stmt = select(db.Interactions.target_taxon_id).where(and_(
+            db.Interactions.subject_taxon_id==taxon_id,
+            db.Interactions.relation_type==relation))
+    else:
+        stmt = select(db.Interactions.subject_taxon_id).where(and_(
+            db.Interactions.target_taxon_id == taxon_id,
+            db.Interactions.relation_type == relation))
 
-
-def get_predators(taxon_id):
-    stmt = select(db.Consumer_rln.consumers_taxon_id).where(db.Consumer_rln.consumed_taxon_id == taxon_id)
-    return get_relation(stmt)
-
-
-def get_prey(taxon_id):
-    stmt = select(db.Consumer_rln.consumed_taxon_id).where(db.Consumer_rln.consumers_taxon_id == taxon_id)
-    print("Qury statement: ", stmt)
-    return get_relation(stmt)
-
-
-def get_parasite(taxon_id):
-    stmt = select(db.Parasite_rln.parasite_taxon_id).where(db.Parasite_rln.host_taxon_id == taxon_id)
-    return get_relation(stmt)
-
-
-def get_host(taxon_id):
-    stmt = select(db.Parasite_rln.host_taxon_id).where(db.Parasite_rln.parasite_taxon_id == taxon_id)
     return get_relation(stmt)
 
 
 def get_relation(stmt):
-    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
-    session = Session(engine)
-
     result = session.execute(stmt).all()
-    print("Session executed")
     result_ids = [r[0] for r in result]
 
 #    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus, db.Species.species).\
@@ -60,12 +61,9 @@ def get_relation(stmt):
         d = q.to_dict()
         result_records.append(d)
 
-    #result_records = {"observed": result_records}
-
     return result_records
 
 
-
-
-
+engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+session = Session(engine)
 
