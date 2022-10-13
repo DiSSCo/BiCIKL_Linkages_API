@@ -1,6 +1,8 @@
 # BiCIKL_Linkages_API
 Here, we outline the functionality of the Biotic Linkages United Explorer (BLUE) API. This prototype is a RESTful API capable of predicting interactions between organisms using a machine learning classifier. It also returns observed interactions, as they have been recorded in bibliographic references, enabling the user to make inferences about unseen interactions.
 
+The BLUE API uses GBIF Taxon Ids to identify unique species. In the future, it will be desirable to accept species names as well as taxon ids. This can be achieved by querying the GBIF taxonomic backbone in a layer between the user and the application. 
+
 ## Endpoints
 
 The API is accessible through the DNS ec2-18-134-210-210.eu-west-2.compute.amazonaws.com/. This section gives an overview of available endpoints.
