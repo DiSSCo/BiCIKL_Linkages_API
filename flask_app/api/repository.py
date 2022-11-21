@@ -16,19 +16,25 @@ def flatten(l):
 
 
 def get_all_tids(is_subject): # Returns pollinators if true (subjects), plants if false (targets)
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
     if is_subject:
         stmt = select(db.Interactions.subject_taxon_id)\
             .where(db.Interactions.relation_type == 'pollinates')
     else:
         stmt = (select(db.Interactions.target_taxon_id)
                 .where(db.Interactions.relation_type == 'pollinates'))
-    result = session.execute(stmt).all()
+
+    with Session(engine) as session:
+        result = session.execute(stmt).all()
     return flatten(result)
 
 def get_taxonomy(taxon_id):
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+
     stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
                       db.Species.species).where(db.Species.taxon_id == taxon_id)
-    result = session.execute(stmt).all()
+    with Session(engine) as session:
+        result = session.execute(stmt).all()
     return flatten(result)
 
 
@@ -46,14 +52,16 @@ def get_interactions(taxon_id, relation, isSubject):
 
 
 def get_relation(stmt):
-    result = session.execute(stmt).all()
-    result_ids = [r[0] for r in result]
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        result = session.execute(stmt).all()
+        result_ids = [r[0] for r in result]
 
-#    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus, db.Species.species).\
-#        where(db.Species.taxon_id.in_(result_ids))
-    stmt = select(db.Species).\
-        where(db.Species.taxon_id.in_(result_ids))
-    result = flatten(session.execute(stmt).all());
+    #    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus, db.Species.species).\
+    #        where(db.Species.taxon_id.in_(result_ids))
+        stmt = select(db.Species).\
+            where(db.Species.taxon_id.in_(result_ids))
+        result = flatten(session.execute(stmt).all());
 
     # result_records = {r.to_dict for r in result}
     result_records = []
@@ -64,6 +72,5 @@ def get_relation(stmt):
     return result_records
 
 
-engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
-session = Session(engine)
+
 
