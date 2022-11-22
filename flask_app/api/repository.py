@@ -28,17 +28,6 @@ def get_all_tids(is_subject):  # Returns pollinators if true (subjects), plants 
     return flatten(result)
 
 
-def get_taxonomy(taxon_id):
-    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
-
-    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
-                  db.Species.species).where(db.Species.taxon_id == taxon_id)
-    with Session(engine) as session:
-        result = session.execute(stmt).all()
-
-    return flatten(result)
-
-
 def get_input_taxonomy(taxon_id):
     engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
 
