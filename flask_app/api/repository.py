@@ -3,20 +3,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
 
-from bin import db_connections
-from api import Tables as db
+#from bin import db_connections
+#from api import Tables as db
 
-
-# from flask_app.bin import db_connections
-# from flask_app.api import Tables as db
+from flask_app.bin import db_connections
+from flask_app.api import Tables as db
 
 def flatten(l):
     # Flatten a list (usually the results of a sqlalchemy query)
     return [item for sublist in l for item in sublist]
 
 
-
-def get_all_tids(is_subject): # Returns pollinators if true (subjects), plants if false (targets)
+def get_all_tids(is_subject):  # Returns pollinators if true (subjects), plants if false (targets)
     engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
     if is_subject:
         stmt = select(db.Interactions.subject_taxon_id) \
@@ -30,18 +28,25 @@ def get_all_tids(is_subject): # Returns pollinators if true (subjects), plants i
     return flatten(result)
 
 
-def get_taxonomy(taxon_id):
+def get_input_taxonomy(taxon_id):
     engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
 
-    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
-                      db.Species.species).where(db.Species.taxon_id == taxon_id)
+    #stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
+    #              db.Species.species, db.Species.sci_name).where(db.Species.taxon_id == taxon_id)
+
+    stmt = select(db.Species).where(db.Species.taxon_id == taxon_id)
     with Session(engine) as session:
-        result = session.execute(stmt).all()
-    return flatten(result)
+        result = flatten(session.execute(stmt).all())
+
+    result_records = []
+    for q in result:
+        d = q.to_dict()
+        result_records.append(d)
+
+    return result_records
 
 
 def get_interactions(taxon_id, relation, isSubject):
-
     if isSubject:
         stmt = select(db.Interactions.target_taxon_id).where(and_(
             db.Interactions.subject_taxon_id == taxon_id,
@@ -60,14 +65,10 @@ def get_relation(stmt):
         result = session.execute(stmt).all()
         result_ids = [r[0] for r in result]
 
-
-    #    stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus, db.Species.species).\
-    #        where(db.Species.taxon_id.in_(result_ids))
-        stmt = select(db.Species).\
+        stmt = select(db.Species). \
             where(db.Species.taxon_id.in_(result_ids))
         result = flatten(session.execute(stmt).all());
 
-    # result_records = {r.to_dict for r in result}
     result_records = []
     for q in result:
         d = q.to_dict()
