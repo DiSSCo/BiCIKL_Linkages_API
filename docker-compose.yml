@@ -2,23 +2,17 @@ version: '3.8'
 
 services:
   flask_app:
-    container_name: flask_api
+    container_name: flask_app
     restart: always
     build: ./flask_app
-    volumes: ['./flask_app:/flask_app']  # left is api folder, right is wkdir defined in flask_app/Dockerfile
-    networks:
-      - linkage
-    ports:
-      - "5000:5000"
+    volumes: [ './flask_app:/flask_app' ]   
+  front_end:
+    container_name: front_end
+    restart: always
+    image: public.ecr.aws/dissco/bicikl-linkages-front-end:latest
   nginx:
     container_name: nginx
     restart: always
     build: ./nginx
-    networks:
-      - linkage
-    expose:
-      - "8080"
     ports:
-      - "80:8080"
-networks:
-  linkage:
+      - "80:80"

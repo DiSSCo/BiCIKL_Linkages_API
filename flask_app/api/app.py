@@ -56,7 +56,6 @@ def pollinator_of(taxon_id):
 
 
 @app.route("/pollinatedBy/<taxon_id>")
-@app.route("/pollinatorOf/<taxon_id>/<conf>")
 def pollinated_by(taxon_id, conf=0.95):
     # Given a pollinator, return plants pollinated by the pollinator
     relation = "pollinates"
@@ -132,7 +131,7 @@ def hosts(taxon_id):
 
     # 1007770 (membranacea) parasiteOf 5422328 (pyrifera)
 
-@app.route("/predict")
+@app.route("/predict", methods=["GET", "POST"])
 def predict():
     request_data = request.get_json()
 
@@ -148,6 +147,25 @@ def predict():
     predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict, check)}
 
     return {**queried_dict, **predicted_dict}
+
+@app.route("/interactions", methods=["GET"])
+def interactions():
+    interactions_list = {
+        "pollinates": [
+            ['pollinaterOf', 'Pollinater of'],
+            ['pollinatedBy', 'Pollinated by']
+        ],
+        "preysOn": [
+            ['predatorOf', 'Predator of'],
+            ['predatedBy', 'Predated by']
+        ],
+        "parasiteOf": [
+            ['parasitizes', 'Parasitizes'],
+            ['parasitizedBy', 'Parasitized by']
+        ]
+    }
+
+    return {"Interactions": interactions_list}
 
 def check_args(conf):
     if type(conf) != float or conf > 1 or conf < 0:

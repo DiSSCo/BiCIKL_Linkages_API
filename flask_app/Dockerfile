@@ -7,12 +7,12 @@ RUN apt-get update && apt-get install -y libpq-dev && apt-get install python3-de
 COPY requirements.txt requirements.txt
 RUN pip3 install -r requirements.txt
 
-COPY ./api app/api
-COPY ./bin app/bin
-COPY ./classifiers app/classifiers
-COPY wsgi.py app/wsgi.py
-
 WORKDIR /app
+
+COPY ./api ./api
+COPY ./bin ./bin
+COPY ./classifiers ./classifiers
+COPY wsgi.py ./
 
 EXPOSE 5000
 ENTRYPOINT ["bash", "/app/bin/bootstrap.sh"]
