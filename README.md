@@ -37,6 +37,7 @@ The optional parameter “conf” allows the user to set the minimum confidence 
 Returns plants pollinated by the taxon of interest by classifying all entities in the database. Like the /pollinatorOf endpoint, this endpoint returns both observed and predicted values. This endpoint can take the same request body as /pollinatorOf as well. 
 
 **/predict**
+
 This endpoint accepts specific taxa to be checked against the taxon of interest, returning confidence values for the most likely taxa. 
 
 *Body (mandatory):*
