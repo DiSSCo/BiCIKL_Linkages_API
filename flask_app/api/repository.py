@@ -2,6 +2,8 @@ from sqlalchemy import select, and_
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.sql import text
+from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import MultipleResultsFound
 
 from bin import db_connections
 from api import Tables as db
@@ -44,6 +46,23 @@ def get_input_taxonomy(taxon_id):
         result_records.append(d)
 
     return result_records
+
+
+def get_taxon_id_from_sci_name(sciName):
+    stmt = select(db.Species.taxon_id).where(
+        db.Species.sci_name == sciName)
+
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        try:
+            result = session.execute(stmt).one()
+        except NoResultFound as e:
+            print("no")
+            
+
+
+
+
 
 
 def get_interactions(taxon_id, relation, isSubject):

@@ -1,11 +1,15 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 from api import predictions
 from api import repository
+from api import TaxonNotFoundException
+
 #from flask_app.api import predictions
 #from flask_app.api import repository
+#from flask_app.api import TaxonNotFoundException
 
 from werkzeug.middleware.proxy_fix import ProxyFix
+
 
 app = Flask(__name__)
 CORS(app, allow_headers=['Content-Type'])
@@ -37,7 +41,7 @@ def pollinator_of(taxon_id):
 
     # Check input args
 
-    conf = request.args.get("conf")
+    conf = request.args.get("confidence")
     if not conf:
         conf = 0.5
 
@@ -62,7 +66,7 @@ def pollinated_by(taxon_id, conf=0.95):
     # Given a pollinator, return plants pollinated by the pollinator
     relation = "pollinates"
     is_subject = True
-    conf = request.args.get("conf")
+    conf = request.args.get("confidence")
     if not conf:
         conf = 0.5
 
@@ -178,5 +182,11 @@ def check_args(conf):
         return False
     return True
 
+
+@app.errorhandler(TaxonNotFoundException)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
 
 
