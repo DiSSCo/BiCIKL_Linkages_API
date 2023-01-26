@@ -1,4 +1,5 @@
 from flask import Flask, request
+from flask_cors import CORS
 from api import predictions
 from api import repository
 #from flask_app.api import predictions
@@ -7,6 +8,7 @@ from api import repository
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 app = Flask(__name__)
+CORS(app, allow_headers=['Content-Type'])
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1)
 
 @app.route("/hello")
