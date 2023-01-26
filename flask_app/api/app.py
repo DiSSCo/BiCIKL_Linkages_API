@@ -43,7 +43,7 @@ def pollinator_of(taxon_id):
 
     if not check_args(conf): return "invalid arguments, check confidence is float between 0 and 1", 400
 
-    taxon_info = repository.get_taxonomy(taxon_id)
+    taxon_info = repository.get_input_taxonomy(taxon_id)
     if not taxon_info:
         return "Taxon not found", 404
 
@@ -70,7 +70,11 @@ def pollinated_by(taxon_id, conf=0.95):
 
     if not check_args(conf): return "invalid arguments, check confidence is float between 0 and 1", 400
 
-    queried_dict = {"Input": repository.get_taxonomy(taxon_id)}
+    taxon_info = repository.get_input_taxonomy(taxon_id)
+    if not taxon_info:
+        return "Taxon not found", 404
+
+    queried_dict = {"Input": taxon_info}
     observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
     predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, conf, strict)}
 
@@ -85,7 +89,7 @@ def predator_of(taxon_id):
     relation = "preysOn"
     is_subject = False
 
-    queried_dict = {"Input": repository.get_taxonomy(taxon_id)}
+    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
     observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
     predicted_dict = {"Predicted": []}
@@ -99,7 +103,7 @@ def predated_by(taxon_id):
     relation = "preysOn"
     is_subject = True
 
-    queried_dict = {"Input": repository.get_taxonomy(taxon_id)}
+    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
     observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
     predicted_dict = {"Predicted": []}
@@ -111,7 +115,7 @@ def parasitizes(taxon_id):
     relation = "parasiteOf"
     is_subject = False
 
-    queried_dict = {"Input": repository.get_taxonomy(taxon_id)}
+    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
     observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
     predicted_dict = {"Predicted": []}
@@ -125,7 +129,7 @@ def hosts(taxon_id):
     relation = "parasiteOf"
     is_subject = True
 
-    queried_dict = {"Input": repository.get_taxonomy(taxon_id)}
+    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
     observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
     predicted_dict = {"Predicted": []}
@@ -144,7 +148,7 @@ def predict():
     confidence=request_data["confidence"]
     strict = False
 
-    queried_dict = {"Input": repository.get_taxonomy(taxon_id)}
+    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
 
     predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict, check)}
 
