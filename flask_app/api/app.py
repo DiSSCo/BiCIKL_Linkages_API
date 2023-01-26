@@ -158,15 +158,15 @@ def predict():
 def interactions():
     interactions_list = {
         "pollinates": [
-            ['pollinatorOf', 'Pollinator of'],
+            ['pollinatorOf', 'Pollinators of'],
             ['pollinatedBy', 'Pollinated by']
         ],
         "preysOn": [
-            ['predatorOf', 'Predator of'],
+            ['predatorOf', 'Predators of'],
             ['predatedBy', 'Predated by']
         ],
         "parasiteOf": [
-            ['parasitizes', 'Parasitizes'],
+            ['parasitizes', 'Parasites of'],
             ['parasitizedBy', 'Parasitized by']
         ]
     }
