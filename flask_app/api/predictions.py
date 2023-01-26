@@ -57,7 +57,9 @@ def get_species_info(t_id):
     stmt = select(db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam, db.Species.genus,
                   db.Species.species, db.Species.sci_name). \
         where(db.Species.taxon_id == t_id)
-    result = session.execute(stmt).first()
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        result = session.execute(stmt).first()
     if not result:
         return []
 
@@ -78,7 +80,9 @@ def get_phyla(relation, phylum, is_subject_query):
         stmt = select(db.Relation_rules.subject_phylum). \
             where(and_(db.Relation_rules.target_phylum == phylum, db.Relation_rules.relation_type == relation))
 
-    result = session.execute(stmt).all()
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        result = session.execute(stmt).all()
     # Return
     return flatten(result)
 
@@ -86,13 +90,14 @@ def get_phyla(relation, phylum, is_subject_query):
 def get_species_list_from_phyla(phyla):
     # Given a list of phyla and the taxon_map used to train a specific classifier, return a list of eligible species
     species_list_full = []
-
-    for phylum in phyla:
-        # Given a phylum, get full taxonomy and ids of all species under that phylum
-        stmt = select(db.Species.taxon_id, db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam,
-                      db.Species.genus, db.Species.species, db.Species.sci_name). \
-            where(db.Species.phylum == phylum)
-        species_list_full = species_list_full + session.execute(stmt).all()
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        for phylum in phyla:
+            # Given a phylum, get full taxonomy and ids of all species under that phylum
+            stmt = select(db.Species.taxon_id, db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam,
+                          db.Species.genus, db.Species.species, db.Species.sci_name). \
+                where(db.Species.phylum == phylum)
+            species_list_full = species_list_full + session.execute(stmt).all()
 
     species_list_taxonomy = [sp[1:] for sp in species_list_full]
     species_list_tid = [sp[0] for sp in species_list_full]
@@ -104,7 +109,10 @@ def get_species_list_from_phyla(phyla):
 def get_taxonomy_from_species_list(taxon_ids):
     stmt = select(db.Species.taxon_id, db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam,
                       db.Species.genus, db.Species.species, db.Species.sci_name).filter(db.Species.taxon_id.in_(taxon_ids))
-    species_list_full = session.execute(stmt).all()
+
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        species_list_full = session.execute(stmt).all()
 
     species_list_taxonomy = [sp[1:] for sp in species_list_full]
     species_list_tid = [sp[0] for sp in species_list_full]
@@ -169,8 +177,10 @@ def get_taxon_map(relation, strict):
     if strict:
         relation = relation + "_strict" # key for the "stricter" taxon_map stored in the database
 
-    stmt = select(db.Classifier.int_mapping).where(db.Classifier.relation_type == relation)
-    result = session.execute(stmt).first()
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        stmt = select(db.Classifier.int_mapping).where(db.Classifier.relation_type == relation)
+        result = session.execute(stmt).first()
     return result[0]
 
 
@@ -237,8 +247,9 @@ def reverse_lookup(map_dict, top_taxa, is_subject_query):
 def resolve_taxa(top_taxa_ids, confidence):
     stmt = select(db.Species). \
         where(db.Species.taxon_id.in_(top_taxa_ids))
-
-    result = flatten(session.execute(stmt).all())
+    engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
+    with Session(engine) as session:
+        result = flatten(session.execute(stmt).all())
     result_records = []
     for r, c in zip(result, confidence):
         d = r.to_dict()
@@ -344,8 +355,6 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
 #0, 0, 5, 6, 71, 472, 256, 0, 0, 32, 99, 126, 765, 256
 
 
-engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
-session = Session(engine)
 
 #get_taxonomy_from_species_list(tid)
 
