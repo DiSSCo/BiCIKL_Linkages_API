@@ -5,12 +5,18 @@ from sqlalchemy.sql import text
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.exc import MultipleResultsFound
 
+
+# Docker
 from bin import db_connections
 from api import Tables as db
+from api.TaxonNotFoundException import TaxonNotFoundException
+'''
 
-#from flask_app.bin import db_connections
-#from flask_app.api import Tables as db
-
+# Local
+from flask_app.bin import db_connections
+from api import Tables as db
+from api.TaxonNotFoundException import TaxonNotFoundException
+'''
 def flatten(l):
     # Flatten a list (usually the results of a sqlalchemy query)
     return [item for sublist in l for item in sublist]
@@ -56,13 +62,10 @@ def get_taxon_id_from_sci_name(sciName):
     with Session(engine) as session:
         try:
             result = session.execute(stmt).one()
+            return result[0]
         except NoResultFound as e:
-            print("no")
-            
-
-
-
-
+            message = sciName + " not present in database"
+            raise TaxonNotFoundException(message)
 
 
 def get_interactions(taxon_id, relation, isSubject):

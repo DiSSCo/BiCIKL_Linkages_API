@@ -1,5 +1,6 @@
 from flask import jsonify
 
+
 class TaxonNotFoundException(Exception):
     status_code = 400
 
@@ -12,7 +13,3 @@ class TaxonNotFoundException(Exception):
         rv = dict(self.payload or ())
         rv['message'] = self.message
         return rv
-
-
-
-
