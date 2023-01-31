@@ -45,7 +45,6 @@ def get_name():
     print(repository.get_taxon_id_from_sci_name(taxon_id))
 
 
-
 @app.route("/pollinatorOf/<taxon_id>")
 @app.route("/pollinatorOf")
 def pollinator_of(taxon_id=None):
@@ -57,8 +56,6 @@ def pollinator_of(taxon_id=None):
             raise TaxonNotFoundException("Invalid search query", 400)
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
 
-    print(taxon_id)
-
     relation = "pollinates"
     # Taxon of interest is NOT a subject
     is_subject = False
@@ -66,11 +63,11 @@ def pollinator_of(taxon_id=None):
 
     # Check input args
 
-    conf = request.args.get("confidence")
-    if not conf:
-        conf = 0.5
+    confidence = request.args.get("confidence")
+    if not confidence:
+        confidence = 0.5
 
-    if not check_args(conf): return "invalid arguments, check confidence is float between 0 and 1", 400
+    if not check_args(confidence): return "invalid arguments, check confidence is float between 0 and 1", 400
 
     taxon_info = repository.get_input_taxonomy(taxon_id)
     if not taxon_info:
@@ -78,7 +75,7 @@ def pollinator_of(taxon_id=None):
 
     queried_dict = {"Input": taxon_info}
     observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
-    predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, conf, strict)}
+    predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict)}
 
     return {**queried_dict, **observed_dict, **predicted_dict}
 
@@ -88,7 +85,7 @@ def pollinator_of(taxon_id=None):
 
 @app.route("/pollinatedBy/<taxon_id>")
 @app.route("/pollinatedBy")
-def pollinated_by(taxon_id=None, conf=0.95):
+def pollinated_by(taxon_id=None, confidence=0.95):
     # Given a pollinator, return plants pollinated by the pollinator
     if taxon_id is None:
         species_name = request.json["species"]
@@ -98,21 +95,21 @@ def pollinated_by(taxon_id=None, conf=0.95):
 
     relation = "pollinates"
     is_subject = True
-    conf = request.args.get("confidence")
-    if not conf:
-        conf = 0.5
+    confidence = request.args.get("confidence")
+    if not confidence:
+        confidence = 0.5
 
     strict = False
 
-    if not check_args(conf): return "invalid arguments, check confidence is float between 0 and 1", 400
+    if not check_args(confidence): return "invalid arguments, check confidence is float between 0 and 1", 400
 
     taxon_info = repository.get_input_taxonomy(taxon_id)
     if not taxon_info:
         return "Taxon not found", 404
 
-    queried_dict = {"Input": taxon_info}
-    observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
-    predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, conf, strict)}
+    queried_dict = {"input": taxon_info}
+    observed_dict = {"observed": repository.get_interactions(taxon_id, relation, is_subject)}
+    predicted_dict = {"predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict)}
 
     return {**queried_dict, **observed_dict, **predicted_dict}
 
@@ -131,10 +128,10 @@ def predator_of(taxon_id=None):
     relation = "preysOn"
     is_subject = False
 
-    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
-    observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
+    queried_dict = {"input": repository.get_input_taxonomy(taxon_id)}
+    observed_dict = {"observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
-    predicted_dict = {"Predicted": []}
+    predicted_dict = {"predicted": []}
     return {**queried_dict, **observed_dict, **predicted_dict}
 
     # 1035290 (pilicornis) preys on 1036203 (properans)
@@ -151,10 +148,10 @@ def predated_by(taxon_id=None):
     relation = "preysOn"
     is_subject = True
 
-    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
-    observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
+    queried_dict = {"input": repository.get_input_taxonomy(taxon_id)}
+    observed_dict = {"observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
-    predicted_dict = {"Predicted": []}
+    predicted_dict = {"predicted": []}
     return {**queried_dict, **observed_dict, **predicted_dict}
 
 
@@ -169,10 +166,10 @@ def parasitizes(taxon_id=None):
     relation = "parasiteOf"
     is_subject = False
 
-    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
-    observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
+    queried_dict = {"input": repository.get_input_taxonomy(taxon_id)}
+    observed_dict = {"observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
-    predicted_dict = {"Predicted": []}
+    predicted_dict = {"predicted": []}
     return {**queried_dict, **observed_dict, **predicted_dict}
 
     # 1007770 (membranacea) parasiteOf 5422328 (pyrifera)
@@ -189,10 +186,10 @@ def hosts(taxon_id=None):
     relation = "parasiteOf"
     is_subject = True
 
-    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
-    observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
+    queried_dict = {"input": repository.get_input_taxonomy(taxon_id)}
+    observed_dict = {"observed": repository.get_interactions(taxon_id, relation, is_subject)}
 
-    predicted_dict = {"Predicted": []}
+    predicted_dict = {"predicted": []}
     return {**queried_dict, **observed_dict, **predicted_dict}
 
     # 1007770 (membranacea) parasiteOf 5422328 (pyrifera)
@@ -209,9 +206,9 @@ def predict():
     confidence = request_data["confidence"]
     strict = False
 
-    queried_dict = {"Input": repository.get_input_taxonomy(taxon_id)}
+    queried_dict = {"input": repository.get_input_taxonomy(taxon_id)}
 
-    predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict, check)}
+    predicted_dict = {"predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict, check)}
 
     return {**queried_dict, **predicted_dict}
 
@@ -236,8 +233,8 @@ def interactions():
     return {"Interactions": interactions_list}
 
 
-def check_args(conf):
-    if type(conf) != float or conf > 1 or conf < 0:
+def check_args(confidence):
+    if type(confidence) != float or confidence > 1 or confidence < 0:
         return False
     return True
 

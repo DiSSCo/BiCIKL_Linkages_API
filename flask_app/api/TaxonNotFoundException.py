@@ -2,7 +2,7 @@ from flask import jsonify
 
 
 class TaxonNotFoundException(Exception):
-    status_code = 400
+    status_code = 404
 
     def __init__(self, message, payload=None):
         Exception.__init__(self)
