@@ -70,9 +70,9 @@ def pollinator_of(taxon_id=None):
     if not taxon_info:
         return "Taxon not found", 404
 
-    queried_dict = {"Input": taxon_info}
-    observed_dict = {"Observed": repository.get_interactions(taxon_id, relation, is_subject)}
-    predicted_dict = {"Predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict)}
+    queried_dict = {"input": taxon_info}
+    observed_dict = {"observed": repository.get_interactions(taxon_id, relation, is_subject)}
+    predicted_dict = {"predicted": predictions.controller(relation, taxon_id, is_subject, confidence, strict)}
 
     return {**queried_dict, **observed_dict, **predicted_dict}
 
