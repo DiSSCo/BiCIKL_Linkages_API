@@ -8,11 +8,14 @@ from sqlalchemy import select, and_
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
+# Docker
+'''
 from bin import db_connections
 from api import Tables as db
-
-#from flask_app.bin import db_connections
-#from flask_app.api import Tables as db
+'''
+# Local
+from flask_app.bin import db_connections
+from api import Tables as db
 
 '''
 TODO
