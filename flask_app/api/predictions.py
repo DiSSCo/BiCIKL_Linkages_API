@@ -9,13 +9,13 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 
 # Docker
-'''
 from bin import db_connections
 from api import Tables as db
-'''
 # Local
+'''
 from flask_app.bin import db_connections
 from api import Tables as db
+'''
 
 '''
 TODO
