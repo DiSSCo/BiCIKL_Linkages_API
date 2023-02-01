@@ -9,13 +9,12 @@ from sqlalchemy.exc import MultipleResultsFound
 # Docker
 from bin import db_connections
 from api import Tables as db
-from api.TaxonNotFoundException import TaxonNotFoundException
+
 '''
 
 # Local
 from flask_app.bin import db_connections
 from api import Tables as db
-from api.TaxonNotFoundException import TaxonNotFoundException
 '''
 def flatten(l):
     # Flatten a list (usually the results of a sqlalchemy query)
