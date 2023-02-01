@@ -7,14 +7,12 @@ from flask_cors import CORS
 # Docker
 from api import predictions
 from api import repository
-from api import TaxonNotFoundException
 
 
 # Local
 '''
 from api import predictions
 from api import repository
-from api.TaxonNotFoundException import TaxonNotFoundException
 '''
 
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -53,7 +51,7 @@ def pollinator_of(taxon_id=None):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
-            raise TaxonNotFoundException("Invalid search query", 400)
+            return ""
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
 
     relation = "pollinates"
@@ -62,7 +60,6 @@ def pollinator_of(taxon_id=None):
     strict = False
 
     # Check input args
-
     confidence = request.args.get("confidence")
     if not confidence:
         confidence = 0.5
@@ -90,7 +87,7 @@ def pollinated_by(taxon_id=None, confidence=0.95):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
-            raise TaxonNotFoundException("Invalid search query", 400)
+            return ""
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
 
     relation = "pollinates"
@@ -123,7 +120,7 @@ def predator_of(taxon_id=None):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
-            raise TaxonNotFoundException("Invalid search query", 400)
+            return ""
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "preysOn"
     is_subject = False
@@ -143,7 +140,7 @@ def predated_by(taxon_id=None):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
-            raise TaxonNotFoundException("Invalid search query", 400)
+            return ""
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "preysOn"
     is_subject = True
@@ -161,7 +158,7 @@ def parasitizes(taxon_id=None):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
-            raise TaxonNotFoundException("Invalid search query", 400)
+            return ""
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "parasiteOf"
     is_subject = False
@@ -181,7 +178,7 @@ def hosts(taxon_id=None):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
-            raise TaxonNotFoundException("Invalid search query", 400)
+            return ""
         taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "parasiteOf"
     is_subject = True

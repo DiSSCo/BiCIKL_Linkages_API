@@ -65,7 +65,7 @@ def get_taxon_id_from_sci_name(sciName):
             return result[0]
         except NoResultFound as e:
             message = sciName + " not present in database"
-            raise TaxonNotFoundException(message)
+            return ""
 
 
 def get_interactions(taxon_id, relation, isSubject):
