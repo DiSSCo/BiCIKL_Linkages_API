@@ -1,6 +1,4 @@
-import json
-
-from flask import Flask, request, jsonify
+from flask import Flask, request
 
 from flask_cors import CORS
 
@@ -10,10 +8,9 @@ from api import repository
 
 
 # Local
-'''
-from api import predictions
-from api import repository
-'''
+#from api import predictions
+#from api import repository
+
 
 from werkzeug.middleware.proxy_fix import ProxyFix
 
@@ -43,8 +40,8 @@ def get_name():
     print(repository.get_taxon_id_from_sci_name(taxon_id))
 
 
-@app.route("/pollinatorOf/<taxon_id>")
-@app.route("/pollinatorOf")
+@app.route("/pollinatorOf/<taxon_id>",  methods=["GET", "POST"])
+@app.route("/pollinatorOf",  methods=["GET", "POST"])
 def pollinator_of(taxon_id=None):
     # Our given taxa is a plant, we are looking for pollinators of taxon_id
     # Return plants which taxon_id is a pollinator of
@@ -52,7 +49,10 @@ def pollinator_of(taxon_id=None):
         species_name = request.json["species"]
         if species_name is None:
             return ""
-        taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        try:
+            taxon_id = int(species_name)
+        except ValueError:
+            taxon_id = repository.get_taxon_id_from_sci_name(species_name)
 
     relation = "pollinates"
     # Taxon of interest is NOT a subject
@@ -80,16 +80,18 @@ def pollinator_of(taxon_id=None):
     # Aconitium colombianum (colombian monskhood) pollinated by Bombus appositus (bumblebee)
 
 
-@app.route("/pollinatedBy/<taxon_id>")
-@app.route("/pollinatedBy")
+@app.route("/pollinatedBy/<taxon_id>",  methods=["GET", "POST"])
+@app.route("/pollinatedBy",  methods=["GET", "POST"])
 def pollinated_by(taxon_id=None, confidence=0.95):
     # Given a pollinator, return plants pollinated by the pollinator
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
             return ""
-        taxon_id = repository.get_taxon_id_from_sci_name(species_name)
-
+        try:
+            taxon_id = int(species_name)
+        except ValueError:
+            taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "pollinates"
     is_subject = True
     confidence = request.args.get("confidence")
@@ -114,14 +116,17 @@ def pollinated_by(taxon_id=None, confidence=0.95):
     # Bombus appositus (bumblebee) pollinates Aconitium colombianum (colombian monskhood)
 
 
-@app.route("/predatorOf/<taxon_id>")
-@app.route("/predatorOf")
+@app.route("/predatorOf/<taxon_id>",  methods=["GET", "POST"])
+@app.route("/predatorOf",  methods=["GET", "POST"])
 def predator_of(taxon_id=None):
     if taxon_id is None:
         species_name = request.json["species"]
         if species_name is None:
             return ""
-        taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        try:
+            taxon_id = int(species_name)
+        except ValueError:
+            taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "preysOn"
     is_subject = False
 
@@ -141,7 +146,10 @@ def predated_by(taxon_id=None):
         species_name = request.json["species"]
         if species_name is None:
             return ""
-        taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        try:
+            taxon_id = int(species_name)
+        except ValueError:
+            taxon_id = repository.get_taxon_id_from_sci_name(species_name)
     relation = "preysOn"
     is_subject = True
 
@@ -159,7 +167,13 @@ def parasitizes(taxon_id=None):
         species_name = request.json["species"]
         if species_name is None:
             return ""
-        taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        try:
+            taxon_id = int(species_name)
+        except ValueError:
+            taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        if species_name is None:
+            return ""
+
     relation = "parasiteOf"
     is_subject = False
 
@@ -179,7 +193,12 @@ def hosts(taxon_id=None):
         species_name = request.json["species"]
         if species_name is None:
             return ""
-        taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        try:
+            taxon_id = int(species_name)
+        except ValueError:
+            taxon_id = repository.get_taxon_id_from_sci_name(species_name)
+        if species_name is None:
+            return ""
     relation = "parasiteOf"
     is_subject = True
 
@@ -195,7 +214,6 @@ def hosts(taxon_id=None):
 @app.route("/predict", methods=["GET", "POST"])
 def predict():
     request_data = request.get_json()
-
     relation = request_data['relation']
     is_subject = request_data['is_subject']
     taxon_id = request_data['taxon_id']
