@@ -111,7 +111,7 @@ def get_species_list_from_phyla(phyla):
 
 def get_taxonomy_from_species_list(taxon_ids):
     stmt = select(db.Species.taxon_id, db.Species.kingdom, db.Species.phylum, db.Species.ord, db.Species.fam,
-                      db.Species.genus, db.Species.species, db.Species.sci_name).filter(db.Species.taxon_id.in_(taxon_ids))
+                  db.Species.genus, db.Species.species, db.Species.sci_name).filter(db.Species.taxon_id.in_(taxon_ids))
 
     engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
     with Session(engine) as session:
@@ -262,32 +262,30 @@ def resolve_taxa(top_taxa_ids, confidence):
     return result_records
 
 
-
 def append_missed_taxa(missed_taxa, taxa):
     for tid in missed_taxa:
         d = {
-            "taxon_id":tid,
-            "confidence":"Unknown"
+            "taxon_id": tid,
+            "confidence": "Unknown"
         }
         taxa.append(d)
     return taxa
 
 
-def append_not_int_mapped(missed_taxa , int_map_to_tid, taxon_ids):
+def append_not_int_mapped(missed_taxa, int_map_to_tid, taxon_ids):
     int_mapped_tids = list(int_map_to_tid.values())
     not_int_mapped = list_diff(taxon_ids, int_mapped_tids)
 
-    return list(set(missed_taxa + not_int_mapped)) # Remove duplicates
+    return list(set(missed_taxa + not_int_mapped))  # Remove duplicates
+
 
 # Main function of this class, calls the whole shebang
 
 def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_list=[]):
-
     null_response = []  # just in case
 
     # Select appropriate int mapping based on our relation
     taxon_map = get_taxon_map(relation, strict)
-    #print(taxon_map)
 
     # Query DB, get taxonomy of taxon of interest
     species_info = get_species_info(taxon_id)
@@ -303,7 +301,7 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
         return null_response
 
     # If no list is provided, we check all potential species at the phylum level
-    if not check_list:
+    if len(check_list) == 0:
         # Get species phylum, determine other phyla it can have the specified relation with
         phylum = species_info[1]
         appropriate_phyla = get_phyla(relation, phylum, is_subject_query)
@@ -312,8 +310,9 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
         species_list, taxon_ids = get_species_list_from_phyla(appropriate_phyla)
         missed_taxa = []
     else:
+        check_list = [eval(i) for i in check_list]
         species_list, taxon_ids = get_taxonomy_from_species_list(check_list)
-        missed_taxa = list_diff(check_list, taxon_ids) # this is the list of taxa not in the database
+        missed_taxa = list_diff(check_list, taxon_ids)  # this is the list of taxa not in the database
 
     '''
     This is where we could impose other restrictions on species_list
@@ -323,7 +322,7 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
 
     # Given species list, get taxon_int mapping (and save this mapping)
     species_to_check_int, int_map_to_tid = map_species_to_int(species_list, taxon_ids, taxon_map)
-    #missed_taxa = append_not_int_mapped(missed_taxa, int_map_to_tid, taxon_ids)
+    # missed_taxa = append_not_int_mapped(missed_taxa, int_map_to_tid, taxon_ids)
 
     # If no appropriate phyla have been int-mapped, return our null response
     if not species_to_check_int:
@@ -336,7 +335,6 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
     else:
         # If our taxon is a TARGET, the species info int mapp will go to the RIGHT of the potential matches
         pass_to_class = [r + species_info_int for r in species_to_check_int]
-
 
     # This is where the magic happens - classify our results and get our confidence
 
@@ -354,18 +352,3 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
         return taxa
     else:
         return append_missed_taxa(missed_taxa, taxa)
-
-#0, 0, 5, 6, 71, 472, 256, 0, 0, 32, 99, 126, 765, 256
-
-
-
-#get_taxonomy_from_species_list(tid)
-
-''''
-strict = False
-relation = "pollinates"
-#taxon_map = get_taxon_map(relation, strict)
-
-
-pass_to_class = [[0,0,3,92,439,464,1175,0,0,0,10,50,817,84]]
-classify_results(pass_to_class, relation,0, strict) '''
