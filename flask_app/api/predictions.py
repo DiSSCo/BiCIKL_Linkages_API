@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 # Docker
 from bin import db_connections
 from api import Tables as db
+
 # Local
 '''
 from flask_app.bin import db_connections
@@ -52,6 +53,7 @@ def flatten(l):
 
 def list_diff(a, b):
     return list(set(a) - set(b))
+
 
 # Get Taxonomic Info
 
@@ -122,6 +124,7 @@ def get_taxonomy_from_species_list(taxon_ids):
 
     return species_list_taxonomy, species_list_tid
 
+
 # taxon_int mapping
 # When the classifier was trained, it used a mapping that transformed each taxonomic level into an integer
 # In order to classify a taxon, we need to return it to the data we received it
@@ -178,7 +181,7 @@ def map_taxonomy_int_row(row, taxon_map):
 def get_taxon_map(relation, strict):
     # Given a relationship (linkage), return the appropriate int mapping used to train the classifier
     if strict:
-        relation = relation + "_strict" # key for the "stricter" taxon_map stored in the database
+        relation = relation + "_strict"  # key for the "stricter" taxon_map stored in the database
 
     engine = create_engine(db_connections.DB_CONNECT, echo=False, future=True)
     with Session(engine) as session:
@@ -310,7 +313,7 @@ def controller(relation, taxon_id, is_subject_query, conf_thresh, strict, check_
         species_list, taxon_ids = get_species_list_from_phyla(appropriate_phyla)
         missed_taxa = []
     else:
-        check_list = [eval(i) for i in check_list]
+        check_list = list(map(int, check_list))
         species_list, taxon_ids = get_taxonomy_from_species_list(check_list)
         missed_taxa = list_diff(check_list, taxon_ids)  # this is the list of taxa not in the database
 
